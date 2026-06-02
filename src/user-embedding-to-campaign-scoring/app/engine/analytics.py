@@ -91,13 +91,18 @@ class AnalyticsTracker:
         scores: np.ndarray,
         bucket_edges: list[int],
     ) -> list[ScoreBucket]:
-        percentiles = np.percentile(scores, bucket_edges)
         n_dims = min(self.config.pca_dimensions, embeddings.shape[1])
 
         reduced: np.ndarray | None = None
         if embeddings.shape[0] >= n_dims:
             pca = PCA(n_components=n_dims)
             reduced = pca.fit_transform(embeddings)
+
+        if len(np.unique(scores)) == 1:
+            centroid = reduced.mean(axis=0).tolist() if reduced is not None else None
+            return [ScoreBucket(bucket_label="p0-p100", count=len(scores), reduced_centroid=centroid)]
+
+        percentiles = np.percentile(scores, bucket_edges)
 
         buckets: list[ScoreBucket] = []
         for i in range(len(percentiles) - 1):
