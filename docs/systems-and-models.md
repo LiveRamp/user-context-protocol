@@ -30,9 +30,7 @@ The browser interacts with a publisher-side tag (such as LiveRamp's ATS.js) that
 
 The tag does not crawl or scrape pages. Publishers provide title, keywords, and other page-level signals through standard locations (meta tags, data layers) or server-side. This keeps integration lightweight for publishers.
 
-Embeddings from the audience model are ideally stored in the first-party cookie (increasing privacy as well as decreasing latencies during embedding retrieval), but could reside server-side as well. Prebid.js will construct a BidRequest object, placing the embedding in an ORTB2 Segment ext object. IAB is adding an extension to this segment object to carry the embedding vector and its metadata (model, dimension, type) in a standardized format.
-
-[Link to ORTB2 Segment ext schema]
+Embeddings from the audience model are ideally stored in the first-party cookie (increasing privacy as well as decreasing latencies during embedding retrieval), but could reside server-side as well. Prebid.js will construct a BidRequest object, placing the embedding in an ORTB2 Segment ext object. IAB is [adding an extension](https://github.com/InteractiveAdvertisingBureau/openrtb/blob/main/extensions/community_extensions/agentic-audiences.md) to this segment object to carry the embedding vector and its metadata (model, dimension, type) in a standardized format.
 
 Storing embeddings in first-party cookies provides a privacy advantage over server-side approaches. Reduced representations of embeddings can be transmitted back as feedback signals, providing an adjustable dial to meet any regulatory surface.
 
