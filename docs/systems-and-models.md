@@ -12,6 +12,46 @@ This is an open, collaborative initiative developed with IAB involvement toward 
 
 The diagram below depicts a header bidding flow for vectorized payloads, building on top of ATS and Prebid. This is not meant to be the only transport mechanism, but rather to demonstrate one such embodiment.
 
+```mermaid
+flowchart TB
+    subgraph asyncPath ["① Async embedding generation (off RTB critical path)"]
+        Page["Publisher page<br/>title · keywords · meta signals"]
+        Tag["ATS.js tag<br/>(or compatible implementation)"]
+        Model["Audience model<br/>inference server"]
+        Cookie["1P cookie<br/>stored segment entries"]
+
+        Page --> Tag
+        Tag -->|"page / identity inputs"| Model
+        Model -->|"Float32 embedding"| Tag
+        Tag --> Cookie
+    end
+
+    subgraph hbPath ["② Header bidding with vectorized payload"]
+        Slot["Ad slot"]
+        Prebid["Prebid.js<br/>Agentic Audiences RTD submodule"]
+        SSP["SSP / header bidding adapter"]
+        DSP["DSP"]
+        Score["Campaign scoring sidecar"]
+
+        Slot --> Prebid
+        Cookie -.->|"read embeddings"| Prebid
+        Prebid -->|"OpenRTB 2.x BidRequest"| SSP
+        SSP --> DSP
+        DSP --> Score
+        Score -->|"relevance scores"| DSP
+        DSP -->|"BidResponse"| SSP
+        SSP --> Slot
+    end
+
+    subgraph ortbExt ["OpenRTB extension: BidRequest.user.data → segment → ext.aa"]
+        ORTB["Data.name: provider identifier<br/>segment[].id · segment[].name<br/>segment[].ext.aa:<br/>ver · vector · dimension · model · type"]
+    end
+
+    Prebid -.-> ORTB
+```
+
+*Embedding vectors travel in [`BidRequest.user.data`](https://github.com/InteractiveAdvertisingBureau/openrtb/blob/main/extensions/community_extensions/agentic-audiences.md) using the standard OpenRTB `Data` and `Segment` objects. Agentic Audiences fields are nested under `Segment.ext.aa` (`ver`, base64-encoded Float32 `vector`, `dimension`, `model`, and `type`).*
+
 ---
 
 ## System Architecture
@@ -32,7 +72,7 @@ The tag does not crawl or scrape pages. Publishers provide title, keywords, and 
 
 Embeddings from the audience model are ideally stored in the first-party cookie (increasing privacy as well as decreasing latencies during embedding retrieval), but could reside server-side as well. Prebid.js will construct a BidRequest object, placing the embedding in an ORTB2 Segment ext object. IAB is adding an extension to this segment object to carry the embedding vector and its metadata (model, dimension, type) in a standardized format.
 
-[Link to ORTB2 Segment ext schema]
+[ORTB2 Segment ext schema](https://github.com/InteractiveAdvertisingBureau/openrtb/blob/main/extensions/community_extensions/agentic-audiences.md)
 
 Storing embeddings in first-party cookies provides a privacy advantage over server-side approaches. Reduced representations of embeddings can be transmitted back as feedback signals, providing an adjustable dial to meet any regulatory surface.
 
